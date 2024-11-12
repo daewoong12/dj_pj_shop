@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    About Info
+  </div>
+  <div class="card-body">
+    <h5 class="card-title">username: {{username}}</h5>
+      <h5 class="card-title">email: {{email}}</h5>
+  </div>
+</div>
+<p></p>
+{% if orderlists %}
+{% for orders in orderlists%}
+<div class="card">
+  <div class="card-header">
+    Order List
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Goods</th>
+          <th scope="col">Price</th>
+          <th scope="col">Count</th>
+          <th scope="col">PriceSum</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders.0 %}
+        <tr>
+        <th scope="row">{{forloop.counter}}</th>
+        <td>{{ order.stuff.name }}</td>
+        <td>{{order.stuff.price}}$</td>
+        <td>{{order.quantity}} </td>
+        <td>{% widthratio order.stuff.price 1 order.quantity %}$</td>
+        <td>
+          <a href="{% url 'mall:cancel_order' order.id %}" class="btn btn-danger btn-sm">주문 취소</a>
+        </td>
+      </tr>
+      </tr>{% endfor %}
+        </tbody>
+    </table>
+    <small class="text-muted">Ordered At {{orders.0.0.order_date}}</small><br>
+    <small class="text-muted">SEND {{orders.1}}$</small> <br> 
+    <small class="text-muted">xxxx-xx-xxxxxxx Kakao Bank</small>
+</div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}
+

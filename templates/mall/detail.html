@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <!-- 상품 정보 -->
+  <div class="card mb-4 shadow">
+    <img src="/media/{{ stuff.image }}" class="card-img-top h-50 w-50 mx-auto d-block mt-3" alt="{{ stuff.name }}">
+    <div class="card-body text-center">
+      <h5 class="card-title">{{ stuff.name }}</h5>
+      <p class="card-text">{{ stuff.detail }}</p>
+      <p class="card-text"><strong>가격:</strong> {{ stuff.price }} $</p>
+    </div>
+  </div>
+
+  <!-- 댓글 작성 섹션 -->
+  <div class="mb-4">
+    <h5>댓글 작성</h5>
+    <form method="post" class="shadow-sm p-4 rounded bg-light">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">댓글 저장</button>
+    </form>
+  </div>
+
+  <hr>
+
+  <!-- 댓글 목록 -->
+  <div>
+    <h5>댓글 목록</h5>
+    <ul class="list-group">
+      {% for comment in comments %}
+        <li class="list-group-item mb-2">
+          <div>
+            <strong>{{ comment.user.username }}</strong>
+            <span class="text-muted"> - {{ comment.created_at|date:"Y-m-d H:i" }}</span>
+          </div>
+          <p>{{ comment.content }}</p>
+
+          <!-- 댓글 수정 및 삭제 버튼 -->
+          {% if comment.user == request.user %}
+            <div class="d-flex justify-content-end">
+              <a href="{% url 'mall:edit_comment' comment.id %}" class="btn btn-secondary btn-sm mx-1">수정</a>
+              <form method="post" action="{% url 'mall:delete_comment' comment.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">삭제</button>
+              </form>
+            </div>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li class="list-group-item">댓글이 없습니다.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- 뒤로가기 버튼 -->
+  <div class="mt-4 text-center">
+    <a href="javascript:history.back()" class="btn btn-secondary">뒤로가기</a>
+  </div>
+</div>
+{% endblock %}

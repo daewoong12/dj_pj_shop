@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-5">
+  <h1 class="text-center mb-4">상품 목록</h1>
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+      {% for stuff in stuffs %}
+          <div class="col">
+              <div class="card h-100 shadow-sm">
+                  <img src="/media/{{ stuff.image }}" class="card-img-top" alt="{{ stuff.name }}" style="height: 200px; object-fit: cover;">
+                  <div class="card-body">
+                      <h5 class="card-title text-truncate">{{ stuff.name }}</h5>
+                      <p class="card-text"><strong>가격:</strong> {{ stuff.price }} $</p>
+                      <p class="card-text"><strong>재고:</strong> {{ stuff.stock }}</p>
+                  </div>
+                  <div class="card-footer">
+                      <div class="btn-group d-flex justify-content-around mb-2" role="group">
+                          {% if stuff.stock > 0 %}
+                              <form method="post" action="{% url 'mall:buy' %}" class="w-100">
+                                  {% csrf_token %}
+                                  <input type="hidden" name="stuff_id" value="{{ stuff.id }}">
+                                  <div class="input-group">
+                                      <input type="number" name="quantity" class="form-control" placeholder="수량" min="1" max="{{ stuff.stock }}" required>
+                                      <button type="submit" class="btn btn-primary">BUY</button>
+                                  </div>
+                              </form>
+                              <a href="{% url 'mall:addcart' stuff.id %}" class="btn btn-success flex-fill me-1">ADD CART</a>
+                          {% else %}
+                              <button class="btn btn-secondary flex-fill me-1" disabled>Sold Out</button>
+                          {% endif %}
+                          <a href="{% url 'mall:detail' stuff.id %}" class="btn btn-info flex-fill">Detail</a>
+                      </div>
+                      <hr>
+                      <div class="btn-group d-flex justify-content-around" role="group">
+                        <!-- 수정 버튼 -->
+                        <a href="{% url 'mall:update_stuff' stuff.id %}" class="btn btn-warning flex-fill me-1">Edit</a>
+                    
+                        <!-- 삭제 버튼 -->
+                        <form method="post" action="{% url 'mall:delete_stuff' stuff.id %}" class="d-inline flex-fill">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger w-100">Delete</button>
+                        </form>
+                    </div>
+                  </div>
+              </div>
+          </div>
+      {% endfor %}
+  </div>
+</div>
+{% endblock %}

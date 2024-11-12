@@ -1,0 +1,18 @@
+body{
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+a{
+    text-decoration-line: none;
+}
+
+.card-text {
+    font-size: 1rem;
+    color: #333;
+}
+
+.card-text:last-of-type {
+    font-weight: bold;
+    color: #007bff;
+}

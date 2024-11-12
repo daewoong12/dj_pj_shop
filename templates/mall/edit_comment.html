@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>댓글 수정</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">저장</button>
+    <a href="{% url 'mall:detail' comment.stuff.id %}" class="btn btn-secondary">취소</a>
+  </form>
+{% endblock %}
