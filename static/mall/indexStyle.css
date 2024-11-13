@@ -16,3 +16,28 @@ a{
     font-weight: bold;
     color: #007bff;
 }
+
+/* 카드 호버 효과 */
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 버튼 호버 효과 */
+.btn-gradient-blue:hover,
+.btn-gradient-green:hover,
+.btn-outline-warning:hover {
+    transform: scale(1.05);
+    background-color: #ffc107 !important; /* Example for Hover */
+    color: #212529;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545 !important;
+    color: white;
+}
+
+

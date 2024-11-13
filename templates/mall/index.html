@@ -1,45 +1,67 @@
 {% extends 'base.html' %}
+{% block title %}상품 목록{% endblock %}
 {% block content %}
 <div class="container my-5">
-  <h1 class="text-center mb-4">상품 목록</h1>
+  <h1 class="text-center mb-4 fw-bold text-primary">과일 상품 목록</h1>
+  <p class="text-center text-muted">신선하고 다양한 과일을 만나보세요!</p>
+
   <div class="row row-cols-1 row-cols-md-3 g-4">
       {% for stuff in stuffs %}
           <div class="col">
-              <div class="card h-100 shadow-sm">
-                  <img src="/media/{{ stuff.image }}" class="card-img-top" alt="{{ stuff.name }}" style="height: 200px; object-fit: cover;">
+              <div class="card h-100 shadow-lg border-0 card-hover">
+                  <!-- 상품 이미지 및 상태 배지 -->
+                  <div class="position-relative">
+                      <img src="/media/{{ stuff.image }}" class="card-img-top rounded-top" alt="{{ stuff.name }}" style="height: 200px; object-fit: cover;">
+                      {% if stuff.stock == 0 %}
+                          <span class="position-absolute top-0 start-0 badge bg-danger m-2">Sold Out</span>
+                      {% elif stuff.stock <= 10 %}
+                          <span class="position-absolute top-0 start-0 badge bg-warning text-dark m-2">Low Stock</span>
+                      {% endif %}
+                  </div>
+
+                  <!-- 상품 정보 -->
                   <div class="card-body">
                       <h5 class="card-title text-truncate">{{ stuff.name }}</h5>
-                      <p class="card-text"><strong>가격:</strong> {{ stuff.price }} $</p>
-                      <p class="card-text"><strong>재고:</strong> {{ stuff.stock }}</p>
+                      <p class="card-text text-muted"><strong>가격:</strong> {{ stuff.price }}원</p>
+                      <p class="card-text text-muted"><strong>재고:</strong> {{ stuff.stock }}개</p>
                   </div>
-                  <div class="card-footer">
-                      <div class="btn-group d-flex justify-content-around mb-2" role="group">
-                          {% if stuff.stock > 0 %}
-                              <form method="post" action="{% url 'mall:buy' %}" class="w-100">
-                                  {% csrf_token %}
-                                  <input type="hidden" name="stuff_id" value="{{ stuff.id }}">
-                                  <div class="input-group">
-                                      <input type="number" name="quantity" class="form-control" placeholder="수량" min="1" max="{{ stuff.stock }}" required>
-                                      <button type="submit" class="btn btn-primary">BUY</button>
-                                  </div>
-                              </form>
-                              <a href="{% url 'mall:addcart' stuff.id %}" class="btn btn-success flex-fill me-1">ADD CART</a>
-                          {% else %}
-                              <button class="btn btn-secondary flex-fill me-1" disabled>Sold Out</button>
-                          {% endif %}
-                          <a href="{% url 'mall:detail' stuff.id %}" class="btn btn-info flex-fill">Detail</a>
-                      </div>
-                      <hr>
-                      <div class="btn-group d-flex justify-content-around" role="group">
-                        <!-- 수정 버튼 -->
-                        <a href="{% url 'mall:update_stuff' stuff.id %}" class="btn btn-warning flex-fill me-1">Edit</a>
-                    
-                        <!-- 삭제 버튼 -->
-                        <form method="post" action="{% url 'mall:delete_stuff' stuff.id %}" class="d-inline flex-fill">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger w-100">Delete</button>
-                        </form>
-                    </div>
+
+                  <!-- 구매 및 장바구니 버튼 -->
+                  <div class="card-footer bg-light">
+                      {% if stuff.stock > 0 %}
+                          <form method="post" class="mb-2">
+                              {% csrf_token %}
+                              <input type="hidden" name="stuff_id" value="{{ stuff.id }}">
+                              <div class="input-group">
+                                  <input type="number" name="quantity" class="form-control border-primary" placeholder="수량" min="1" max="{{ stuff.stock }}" required>
+                                  <button formaction="{% url 'mall:buy' %}" type="submit" class="btn btn-gradient-blue">
+                                      <i class="fas fa-shopping-cart"></i> 바로 구매
+                                  </button>
+                                  <button formaction="{% url 'mall:add_to_cart' stuff.id %}" type="submit" class="btn btn-gradient-green">
+                                      <i class="fas fa-cart-plus"></i> 장바구니
+                                  </button>
+                              </div>
+                          </form>
+                      {% else %}
+                          <button class="btn btn-secondary w-100" disabled>Sold Out</button>
+                      {% endif %}
+                      <a href="{% url 'mall:detail' stuff.id %}" class="btn btn-outline-warning w-100 mt-2">
+                          <i class="fas fa-info-circle"></i> 상품 상세보기
+                      </a>
+                  </div>
+
+                  <!-- 수정 및 삭제 버튼 -->
+                  <hr>
+                  <div class="d-flex gap-2">
+                      <a href="{% url 'mall:update_stuff' stuff.id %}" class="btn btn-outline-primary w-50">
+                          <i class="fas fa-edit"></i> Edit
+                      </a>
+                      <form method="post" action="{% url 'mall:delete_stuff' stuff.id %}" class="w-50">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-outline-danger w-100">
+                              <i class="fas fa-trash-alt"></i> Delete
+                          </button>
+                      </form>
                   </div>
               </div>
           </div>

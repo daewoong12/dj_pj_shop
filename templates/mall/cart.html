@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block link%}
+{% block page_type %}cart{% endblock %}
+
+{% block link %}
 <link rel="stylesheet" type="text/css" href="{% static 'cart/cartStyle.css' %}">
 <style>
   /* 장바구니 버튼 크기 확대 */
@@ -10,43 +12,73 @@
   }
 </style>
 {% endblock %}
+
 {% block content %}
 <script>
-    function getCheckboxValue()  {
-        // 선택된 목록 가져오기
-        const list_=document.getElementsByClassName('form-check-input');
-        document.getElementById('sum').innerText
-          = list_;  
-        const buyStuff=document.getElementById('buyStuff');
-        // 선택된 목록에서 value 찾기
-        let result = parseInt(0);
-        let len = list_.length;
-        let check=false;
-        buyStuff.innerHTML='';
-        for (let i=0;i<len;i++){
-            element=list_.item(i)
-            if (element.checked)
-            {
-            let hidden_val=document.createElement('input');
-            hidden_val.setAttribute("type", "hidden");
-            hidden_val.value=element.name;
-            hidden_val.name=element.name;
-            hidden_val.checked=true;
-            buyStuff.appendChild(hidden_val);
-            result+=parseInt(element.value)
-            check=true
-            }
-            }
-        
-        // 출력
-        document.getElementById('sum').innerText
-          = result;
+  document.addEventListener('DOMContentLoaded', function () {
+    const body = document.body;
+    const currentPageType = body.getAttribute('data-page-type');
+
+    // CART로 이동할 때만 애니메이션 적용
+    const links = document.querySelectorAll('a');
+    links.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href.includes('/cart/')) {
+          e.preventDefault();
+          body.classList.add('fade-out');
+          setTimeout(() => {
+            window.location.href = href;
+          }, 500);
+        }
+      });
+    });
+
+    // 애니메이션 비활성화 대상 액션들
+    const excludedActions = ['plusStuff', 'minusStuff', 'buy'];
+
+    // 모든 폼의 submit 이벤트에 대해 확인
+    const forms = document.querySelectorAll('form');
+    forms.forEach(function (form) {
+      form.addEventListener('submit', function (e) {
+        const action = form.getAttribute('action') || '';
+        if (excludedActions.some(actionName => action.includes(actionName))) {
+          body.classList.remove('fade-out', 'fade-in'); // 애니메이션 클래스 제거
+        } else {
+          body.classList.add('fade-out');
+        }
+      });
+    });
+
+    // 기존 Checkbox 기능 유지
+    window.getCheckboxValue = function () {
+      const list_ = document.getElementsByClassName('form-check-input');
+      const buyStuff = document.getElementById('buyStuff');
+      let result = 0;
+
+      buyStuff.innerHTML = '';
+      for (let i = 0; i < list_.length; i++) {
+        let element = list_.item(i);
+        if (element.checked) {
+          let hidden_val = document.createElement('input');
+          hidden_val.setAttribute("type", "hidden");
+          hidden_val.value = element.name;
+          hidden_val.name = element.name;
+          buyStuff.appendChild(hidden_val);
+          result += parseInt(element.value);
+        }
       }
-      window.onload=function(){
-        getCheckboxValue()
-      }
-    </script>
-    {% if stuffs %}
+
+      document.getElementById('sum').innerText = result;
+    };
+
+    window.onload = function () {
+      getCheckboxValue();
+    };
+  });
+</script>
+
+{% if stuffs %}
 <div class="card">
   <div class="card-header">
     CART
@@ -60,71 +92,66 @@
             <th scope="col">Goods</th>
             <th scope="col">Price</th>
             <th scope="col">Count</th>
-            <th scope="col"> </th>
+            <th scope="col"></th>
             <th scope="col">PriceSum</th>
-            <th scope="col"> </th>
+            <th scope="col"></th>
           </tr>
         </thead>
         <tbody>
             {% for stuff in stuffs %}
           <tr>
-            <th scope="row"><div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="{{stuff.stuffs.name}}" value="{% widthratio stuff.stuffs.price 1 stuff.quantity %}" id="flexCheckDefault" onclick=getCheckboxValue() checked>
-                </div></th>
+            <th scope="row">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="{{stuff.stuffs.name}}" value="{% widthratio stuff.stuffs.price 1 stuff.quantity %}" id="flexCheckDefault" onclick="getCheckboxValue()" checked>
+              </div>
+            </th>
             <th>{{forloop.counter}}</th>
-            <td >{{ stuff.stuffs.name }}</td>
-            <td>{{stuff.stuffs.price}}$</td>
-            <td>{{ stuff.quantity}} </td>
-        <td><form method="post" action="{% url 'mall:plusStuff' stuff.stuffs.id %}">
-            {% csrf_token %}
-            <button  class="btn btn-outline-primary"
-        style="--bs-btn-font-size: .1rem; border: none;" >
-        ➕
-</button>
-        </form>
-        <form method="post" action="{% url 'mall:minusStuff' stuff.stuffs.id %}" >
-            {% csrf_token %}
-            <button  class="btn btn-outline-primary"
-        style=" --bs-btn-font-size: .1rem; border: none;">
-        ➖
-</button>
-        </form></td>
-            <td>{% widthratio stuff.stuffs.price 1 stuff.quantity %}$</td>
-            <td><form method="post" action="{% url 'mall:subCart' stuff.stuffs.id %}" >
+            <td>{{ stuff.stuffs.name }}</td>
+            <td>{{stuff.stuffs.price}}원</td>
+            <td>{{ stuff.quantity }}</td>
+            <td>
+              <form method="post" action="{% url 'mall:plusStuff' stuff.stuffs.id %}">
                 {% csrf_token %}
-                <button class="card-link badge bg-secondary"> X </button>
-            </form></td>
+                <button class="btn btn-outline-primary" style="border: none;">➕</button>
+              </form>
+              <form method="post" action="{% url 'mall:minusStuff' stuff.stuffs.id %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-primary" style="border: none;">➖</button>
+              </form>
+            </td>
+            <td>{% widthratio stuff.stuffs.price 1 stuff.quantity %}원</td>
+            <td>
+              <form method="post" action="{% url 'mall:subCart' stuff.stuffs.id %}">
+                {% csrf_token %}
+                <button class="card-link badge bg-secondary">X</button>
+              </form>
+            </td>
           </tr>
           {% endfor %}
-          <th scope="row"></th>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td><span id="sum"></span>$</td>
-          <td>                  
-            <form method="post" action="{% url 'mall:buy' %}">
-            {% csrf_token %}
-            <div id="buyStuff">
-
-            </div>
-              <button class="btn btn-primary">BUY</button>
-          </form></td>
-          
+          <tr>
+            <th scope="row"></th>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><span id="sum"></span>원</td>
+            <td>
+              <form method="post" action="{% url 'mall:buy' %}">
+                {% csrf_token %}
+                <div id="buyStuff"></div>
+                <button class="btn btn-primary">BUY</button>
+              </form>
+            </td>
+          </tr>
         </tbody>
       </table>
   </div>
 </div>
-        {% else %}
-        <div class="card">
-  <div class="card-header">
-    CART
-  </div>
-  <div class="card-body">
-
-  </div>
+{% else %}
+<div class="card">
+  <div class="card-header">CART</div>
+  <div class="card-body">장바구니에 담긴 상품이 없습니다.</div>
 </div>
-
-    {% endif %}
+{% endif %}
 {% endblock %}

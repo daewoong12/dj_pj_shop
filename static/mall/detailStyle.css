@@ -2,3 +2,37 @@ body{
     margin: 0;
     padding: 0;
 }
+
+/* 댓글 항목의 그림자 효과 */
+.list-group-item {
+    border: none;
+    transition: box-shadow 0.2s ease;
+}
+.list-group-item:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 댓글 저장 버튼 */
+/* 댓글 저장 버튼 */
+.btn-gradient-blue {
+    background: linear-gradient(45deg, #1d8cf8, #3358f4);
+    color: white;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-gradient-blue:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 댓글 입력 필드 스타일 */
+textarea.form-control {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+textarea.form-control:focus {
+    border-color: #1d8cf8;
+    box-shadow: 0 0 10px rgba(29, 140, 248, 0.25);
+}
