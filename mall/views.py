@@ -135,18 +135,44 @@ def buyAtIndex(request,stuff_id):
 @login_required(login_url='common:login')
 def buy(request):
     if request.method == 'POST':
-        # 상품 ID와 수량을 POST 요청에서 가져옴
         stuff_id = request.POST.get('stuff_id')
         quantity = int(request.POST.get('quantity', 0))
 
-        # stuff_id가 없으면 기존 장바구니 기반 구매로 진행
-        if not stuff_id:
+        if stuff_id:
+            # 바로 구매
+            stuff = get_object_or_404(Stuff, id=stuff_id)
+
+            if quantity <= 0:
+                messages.error(request, '수량은 1개 이상이어야 합니다.')
+                return redirect('mall:detail', stuff_id=stuff.id)
+
+            if quantity > stuff.stock:
+                messages.error(request, f'{stuff.name}의 재고가 부족합니다.')
+                return redirect('mall:detail', stuff_id=stuff.id)
+
+            # 주문 생성 및 재고 차감
+            Order.objects.create(
+                user=request.user,
+                stuff=stuff,
+                quantity=quantity,
+                order_date=now(),
+                subtotal=stuff.price * quantity
+            )
+            stuff.stock -= quantity
+            stuff.save()
+
+            messages.success(request, f'{stuff.name}을(를) {quantity}개 구매하였습니다.')
+            return redirect('mall:info')
+
+        else:
+            # 장바구니 구매
             cart_items = Cart.objects.filter(user=request.user)
-            
             if not cart_items.exists():
                 messages.error(request, '장바구니가 비어 있습니다.')
                 return redirect('mall:cart')
-            
+
+            insufficient_stock_items = []
+
             for cart_item in cart_items:
                 stuff = cart_item.stuffs
                 quantity = cart_item.quantity
@@ -157,79 +183,45 @@ def buy(request):
                         user=request.user,
                         stuff=stuff,
                         quantity=quantity,
-                        order_date=datetime.now(),
+                        order_date=now(),
                         subtotal=stuff.price * quantity
                     )
-                    # 재고 차감
                     stuff.stock -= quantity
                     stuff.save()
-                    # 장바구니에서 제거
                     cart_item.delete()
                 else:
-                    messages.error(request, f'{stuff.name}의 재고가 부족합니다.')
-                    return redirect('mall:cart')
+                    insufficient_stock_items.append(stuff.name)
 
-            messages.success(request, '구매가 완료되었습니다.')
-            return redirect('mall:info')  # 구매 후 내 정보 페이지로 리다이렉트
-        
-        else:
-            # 특정 상품 바로 구매 처리
-            stuff = get_object_or_404(Stuff, id=stuff_id)
+            if insufficient_stock_items:
+                messages.warning(request, f'다음 항목의 재고가 부족하여 구매되지 않았습니다: {", ".join(insufficient_stock_items)}')
             
-            if quantity > 0 and quantity <= stuff.stock:
-                # 주문 생성
-                Order.objects.create(
-                    user=request.user,
-                    stuff=stuff,
-                    quantity=quantity,
-                    order_date=datetime.now(),
-                    subtotal=stuff.price * quantity
-                )
-                # 재고 차감
-                stuff.stock -= quantity
-                stuff.save()
+            messages.success(request, '장바구니의 나머지 상품이 구매되었습니다.')
+            return redirect('mall:info')
 
-                messages.success(request, f'{stuff.name}을(를) {quantity}개 구매하였습니다.')
-                return redirect('mall:info')
-            else:
-                messages.error(request, f'{stuff.name}의 재고가 부족합니다.')
-                return redirect('mall:home')  # 홈 화면으로 리다이렉트
-
-    return redirect('mall:cart')  # GET 요청 시 장바구니 페이지로 리다이렉트
+    return redirect('mall:cart')
 
 def product_list(request):
     stuffs = Stuff.objects.all()  # 등록된 모든 물품 가져오기
     return render(request, 'mall/index.html', {'stuffs': stuffs})
 
 @login_required  # 로그인된 사용자만 접근 가능
+@login_required  # 로그인된 사용자만 접근 가능
 def add_to_cart(request, stuff_id):
     stuff = get_object_or_404(Stuff, id=stuff_id)
 
     if request.method == 'POST':
-        # POST 요청에서 전달받은 수량을 가져옵니다. 기본값은 1로 설정합니다.
+        # POST 요청에서 전달받은 수량, 기본값 1
         quantity = int(request.POST.get('quantity', 1))
 
-        # 재고 확인
-        if quantity > stuff.stock:
-            messages.error(request, '재고가 부족합니다.')
-            return redirect('mall:detail', stuff_id=stuff.id)
-
-        # 장바구니에 아이템 추가 또는 수량 업데이트
+        # 장바구니에 상품 추가 또는 수량 업데이트
         cart_item, created = Cart.objects.get_or_create(user=request.user, stuffs=stuff)
-        if created:
-            cart_item.quantity = quantity  # 새로운 아이템의 경우 수량 설정
-        else:
-            cart_item.quantity += quantity  # 기존 아이템의 경우 수량 추가
+        cart_item.quantity += quantity
         cart_item.save()
-
-        # 재고 감소
-        stuff.stock -= quantity
-        stuff.save()
 
         messages.success(request, f'{stuff.name}이(가) 장바구니에 {quantity}개 추가되었습니다.')
         return redirect('mall:cart')
-    else:
-        return redirect('mall:detail', stuff_id=stuff.id)
+    
+    return redirect('mall:detail', stuff_id=stuff.id)
     
 def cancel_order(request, order_id):
     # 주문 객체 가져오기
